@@ -7,8 +7,8 @@ from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Получаем токен и ID админа из переменных окружения
-API_TOKEN = os.getenv("7916354605:AAF5Dh9KBN1-8sRTc8pIpq67U6T8fkDJkxA")
-ADMIN_ID = os.getenv("893382104")
+API_TOKEN = os.getenv("API_TOKEN")
+ADMIN_ID = os.getenv("ADMIN_ID")
 
 # Настройка логгера
 logging.basicConfig(level=logging.INFO)
