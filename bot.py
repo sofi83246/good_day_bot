@@ -3,17 +3,14 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types, F, Router
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 
-# Получаем токен и ID админа из переменных окружения
 API_TOKEN = os.getenv("API_TOKEN")
 ADMIN_ID = os.getenv("ADMIN_ID")
 
-# Настройка логгера
 logging.basicConfig(level=logging.INFO)
 
-# Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 router = Router()
@@ -21,39 +18,37 @@ dp.include_router(router)
 
 # Главное меню
 main_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Узнать о приложении", callback_data="about_app")],
-    [InlineKeyboardButton(text="Подробнее о франшизе", callback_data="about_franchise")],
-    [InlineKeyboardButton(text="Оставить заявку", callback_data="send_request")]
+    [InlineKeyboardButton(text="📱 Узнать о приложении", callback_data="about_app")],
+    [InlineKeyboardButton(text="💼 Подробнее о франшизе", callback_data="about_franchise")],
+    [InlineKeyboardButton(text="🎥 Смотреть видео", callback_data="watch_video")],
+    [InlineKeyboardButton(text="📄 Скачать презентацию", callback_data="download_presentation")],
+    [InlineKeyboardButton(text="📝 Оставить заявку", callback_data="send_request")]
 ])
 
-# Стартовое сообщение
-@router.message(CommandStart())
-async def start_handler(message: types.Message):
-    text = (
-        "👋 Привет! \n\n"
-        "Если тебя интересует пассивный заработок, желание работать на себя, "
-        "финансовая независимость и запуск своего дела с минимальными рисками — "
-        "ты по адресу. Франшиза Good Day — лучший вариант.\n\n"
-        "Нажми «Старт», чтобы узнать подробнее."
-    )
-    await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Старт", callback_data="intro")]
-    ]))
+# Команды Telegram меню (слева от поля ввода)
+@dp.startup()
+async def setup_bot_commands(bot: Bot):
+    commands = [
+        types.BotCommand(command="menu", description="Главное меню"),
+        types.BotCommand(command="app", description="О приложении"),
+        types.BotCommand(command="franchise", description="О франшизе"),
+        types.BotCommand(command="presentation", description="Скачать презентацию"),
+        types.BotCommand(command="video", description="Смотреть видео"),
+        types.BotCommand(command="apply", description="Оставить заявку")
+    ]
+    await bot.set_my_commands(commands)
 
-# Введение
-@router.callback_query(F.data == "intro")
-async def intro(callback: types.CallbackQuery):
-    await callback.message.answer(
-        "📱 Good Day — это проект с множеством направлений, объединённых мобильным приложением. "
-        "Смартфон — спутник каждого, и мы используем это преимущество."
-    )
-    await callback.message.answer("⬇ Меню:", reply_markup=main_menu)
-    await callback.answer()
+# Главное меню
+@router.message(Command("menu"))
+async def menu_command(message: types.Message):
+    await message.answer("⬇ Главное меню:", reply_markup=main_menu)
 
-# Кнопка "Узнать о приложении"
+# О приложении
+@router.message(Command("app"))
 @router.callback_query(F.data == "about_app")
-async def about_app(callback: types.CallbackQuery):
-    await callback.message.answer(
+async def about_app(event):
+    msg = event.message if isinstance(event, types.CallbackQuery) else event
+    await msg.answer(
         "📱 В приложении Good Day:\n"
         "• Скидки и акции в городе\n"
         "• Реклама для бизнесов\n"
@@ -61,12 +56,14 @@ async def about_app(callback: types.CallbackQuery):
         "🔥 Идеально подходит для пользователей и предпринимателей.",
         reply_markup=main_menu
     )
-    await callback.answer()
+    if isinstance(event, types.CallbackQuery): await event.answer()
 
-# Кнопка "О франшизе"
+# О франшизе
+@router.message(Command("franchise"))
 @router.callback_query(F.data == "about_franchise")
-async def about_franchise(callback: types.CallbackQuery):
-    await callback.message.answer(
+async def about_franchise(event):
+    msg = event.message if isinstance(event, types.CallbackQuery) else event
+    await msg.answer(
         "💼 Франшиза Good Day — это:\n"
         "• Минимальные риски\n"
         "• Эксклюзивность в регионе\n"
@@ -76,12 +73,32 @@ async def about_franchise(callback: types.CallbackQuery):
         "Мы помогаем тебе на каждом этапе запуска.",
         reply_markup=main_menu
     )
-    await callback.answer()
+    if isinstance(event, types.CallbackQuery): await event.answer()
 
-# Кнопка "Оставить заявку"
+# Скачать презентацию
+@router.message(Command("presentation"))
+@router.callback_query(F.data == "download_presentation")
+async def send_presentation(event):
+    msg = event.message if isinstance(event, types.CallbackQuery) else event
+    document = FSInputFile("presentation.pdf")
+    await msg.answer_document(document, caption="📄 Презентация франшизы Good Day", reply_markup=main_menu)
+    if isinstance(event, types.CallbackQuery): await event.answer()
+
+# Смотреть видео
+@router.message(Command("video"))
+@router.callback_query(F.data == "watch_video")
+async def send_video(event):
+    msg = event.message if isinstance(event, types.CallbackQuery) else event
+    video = FSInputFile("intro_video.mp4")
+    await msg.answer_video(video=video, caption="🎥 Видео-презентация от основателя", reply_markup=main_menu)
+    if isinstance(event, types.CallbackQuery): await event.answer()
+
+# Оставить заявку
+@router.message(Command("apply"))
 @router.callback_query(F.data == "send_request")
-async def send_request(callback: types.CallbackQuery):
-    user = callback.from_user
+async def send_request(event):
+    user = event.from_user
+    msg = event.message if isinstance(event, types.CallbackQuery) else event
     text = (
         f"📬 Новая заявка!\n\n"
         f"Имя: {user.full_name}\n"
@@ -90,8 +107,8 @@ async def send_request(callback: types.CallbackQuery):
     )
     if ADMIN_ID:
         await bot.send_message(chat_id=int(ADMIN_ID), text=text)
-    await callback.message.answer("✅ Заявка отправлена! Мы свяжемся с тобой в ближайшее время.")
-    await callback.answer()
+    await msg.answer("✅ Заявка отправлена! Мы свяжемся с тобой в ближайшее время.", reply_markup=main_menu)
+    if isinstance(event, types.CallbackQuery): await event.answer()
 
 # Запуск бота
 async def main():
