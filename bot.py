@@ -233,11 +233,6 @@ async def send_video(callback: types.CallbackQuery):
 async def main():
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
-    keep_alive()  # запускаем веб-сервер для удержания Replit "живым"
-    asyncio.run(main())  # запускаем бота
-
-
 
 # Оставить заявку
 @router.callback_query(F.data == "send_request")
@@ -253,8 +248,6 @@ async def send_request(callback: types.CallbackQuery):
         await bot.send_message(chat_id=int(ADMIN_ID), text=text)
     await callback.message.answer("✅ Заявка отправлена! Мы свяжемся с Вами в ближайшее время.", reply_markup=main_menu)
     await callback.answer()
-
-keep_alive()
 
 
 if __name__ == "__main__":
