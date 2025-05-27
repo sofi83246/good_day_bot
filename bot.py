@@ -5,7 +5,6 @@ from aiogram import Bot, Dispatcher, types, F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
-from keep_alive import keep_alive
 
 # Установите свои значения или используйте переменные окружения
 API_TOKEN = os.getenv("API_TOKEN")
